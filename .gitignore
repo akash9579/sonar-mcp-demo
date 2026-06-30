@@ -1,0 +1,6 @@
+Sonar/
+.scannerwork/
+__pycache__/
+*.pyc
+users.db
+sonar-project.properties
