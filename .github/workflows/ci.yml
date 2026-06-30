@@ -1,0 +1,19 @@
+name: CI Pipeline
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Lint
+        run: pip install flake8 && flake8 .
+      - name: Security scan
+        run: pip install bandit && bandit -r . -ll
+      - name: Run tests
+        run: pip install pytest httpx && pytest
