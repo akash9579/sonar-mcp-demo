@@ -5,6 +5,7 @@ __pycache__/
 users.db
 sonar-project.properties
 
-
 .mcp.json
 CLAUDE.md
+images/
+debug.log
