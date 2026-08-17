@@ -9,3 +9,5 @@ sonar-project.properties
 CLAUDE.md
 images/
 debug.log
+app-credentials.txt
+.env

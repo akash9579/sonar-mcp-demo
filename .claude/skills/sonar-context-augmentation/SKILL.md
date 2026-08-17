@@ -25,6 +25,30 @@ PHP, C, C++, Go, and more). Use `--languages` and `--categories` to narrow resul
 sonar context guidelines get
 ```
 
+### Before Adding or Updating Dependencies
+
+You MUST call `dependencies check` before modifying any manifest or lockfile
+(e.g. package.json, pom.xml, build.gradle, build.gradle.kts, requirements.txt,
+pyproject.toml, go.mod, Cargo.toml, Gemfile, composer.json, .csproj). Supports **all major ecosystems**, including npm, Maven,
+PyPI, Go, Cargo, RubyGems, Composer, NuGet.
+
+```bash
+sonar context dependencies check --purl "pkg:<ecosystem>/<name>@<version>"
+```
+
+How to react to the response:
+
+- **`vulnerabilities`** — withdrawn entries are omitted. Block the change if any entry
+  meets at least one condition: `riskSeverity` is BLOCKER or HIGH, `cvssScore` is high,
+  or `cweIds` contains a dangerous weakness. `riskSeverity` is contextual, not
+  `cvssScore`. Show the CVE details to the user, and propose a safe version from
+  `fixedVersions` or `unaffectedVersions`.
+- **`malicious`** — if `true`, refuse the dependency entirely and warn the user about
+  supply-chain risk.
+- **`license.allowed`** — if `false`, do not add the dependency, explain the policy
+  violation, and suggest alternative packages. If `null`, license policy evaluation
+  requires Enterprise tier; present the SPDX `license.expression` to the user.
+
 ### When Navigating, Exploring, or Understanding Code
 
 Prefer these semantic tools over `grep`/`find` by default — they stay correct where grep/find slip
@@ -79,6 +103,7 @@ Check architecture before introducing new modules or cross-module dependencies, 
 | `navigation trace-callees` | All navigation languages† | Downstream call chains |
 | `navigation get-type-hierarchy` | All navigation languages† | Class/interface/struct inheritance |
 | `navigation get-references` | Java, C#, JS/TS, Python | Class/module-level coupling (inbound/outbound) |
+| `dependencies check` | All ecosystems | e.g. npm, Maven, PyPI, Go, NuGet, Cargo, Composer, RubyGems |
 
 
 > **†Navigation languages**: Java, C#, JS/TS (JSX/TSX), Python and Rust.
@@ -355,6 +380,29 @@ Options:
 - `--mode <mode>` — retrieval mode: `project_based`, `category_based`, or `combined`.
   Default is `project_based`, but switches to `category_based` automatically when `--categories` is provided.
 - `--files <value> [<value>...]` — file paths to filter by. Space-separated or repeated flag.
+
+#### `dependencies check` — Check a dependency for vulnerabilities, malware, and license compliance (All Ecosystems)
+
+```bash
+sonar context dependencies check --purl "pkg:npm/lodash@4.17.21"
+sonar context dependencies check --purl "pkg:maven/org.apache.logging.log4j/log4j-core@2.14.1"
+```
+
+**MUST run before adding or updating any dependency.** See the "Before Adding or
+Updating Dependencies" workflow above for how to react to each field.
+
+Options:
+
+- `--purl <purl>` (required) — Package URL with version
+- `--format <compact|pretty>` — output format (default: compact)
+
+Returns:
+
+```text
+{purl, vulnerabilities: [{id, cvssScore, cweIds, riskSeverity, withdrawn, publishedOn,
+  fixedVersions: [{version, fixLevel, descriptionCode}], unaffectedVersions}],
+  malicious, license: {expression, allowed}}
+```
 
 ## Output Interpretation
 
