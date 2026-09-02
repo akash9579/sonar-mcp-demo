@@ -18,7 +18,7 @@ app = FastAPI()
 
 @app.get("/users/search")
 async def search_users(query: str):
-    logger.info("Received search query: %s", query)
+    logger.info("Received search request")
     results = execute_query(query)
     return {"results": results}
 
