@@ -1,9 +1,10 @@
+import hmac
 import logging
+import os
 from typing import Any
 
 # Entry point for the FastAPI app
-from fastapi import FastAPI
-from database import execute_query
+from fastapi import Depends, FastAPI, Header, HTTPException
 
 from db.repository import (
     find_users_by_name,
@@ -16,10 +17,22 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 
-@app.get("/users/search")
-async def search_users(query: str):
+def require_authenticated_caller(
+    authorization: str | None = Header(default=None),
+) -> None:
+    expected_token = os.environ.get("API_AUTH_TOKEN")
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    provided_token = authorization.removeprefix("Bearer ")
+    if not expected_token or not hmac.compare_digest(provided_token, expected_token):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@app.get("/users/search", dependencies=[Depends(require_authenticated_caller)])
+async def search_users(query: str) -> dict[str, list[dict[str, Any]]]:
     logger.info("Received search query: %s", query)
-    results = execute_query(query)
+    results = find_users_by_name(query)
     return {"results": results}
 
 
